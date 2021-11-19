@@ -12,7 +12,7 @@ import albumentations.augmentations.functional as F
 from albumentations.pytorch import ToTensorV2
 
 # from utils.unet import UNet
-from utils.unet import UNet
+from utils.unet import UNet, UNet_deep
 
 from skimage import io
 import cv2
@@ -25,7 +25,6 @@ from utils.load_files import getFileList
 # import supporting_functions.customTransformations as ct
 # from supporting_functions.mmClassifier import mmClassifier
 
-
 def train_net(save_name = None):
 
     #load the data
@@ -34,7 +33,7 @@ def train_net(save_name = None):
                  ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/exp3_agarosePad_phase/',''),
                  ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/Kuba/','kuba_raw'),
                  ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/Praneeth/','P_raw'),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BV3242/exp7_phase',''),
+                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BV3242/exp8_phase',''),
                  ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/empty_MM_channels/','aphase'),
                  ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BT2878/','raw')
                  ]
@@ -47,7 +46,7 @@ def train_net(save_name = None):
                  ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/exp3_agarosePad_gt/',''),
                  ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/Kuba/','kuba_gt'),
                  ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/Praneeth/','P_gt'),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BV3242/exp7_gt',''),
+                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BV3242/exp8_gt',''),
                  ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/empty_MM_channels/','gt'),
                  ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BT2878/','gt')
                  ]
@@ -91,11 +90,13 @@ def train_net(save_name = None):
                                                                      ]))
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    net = UNet()
-    # net = UNet1024()
+    # net = UNet()
+    # net = UNet(max_filters=256)
+    net = UNet_deep(max_filters=1024)
+    # net = UNet_shallow(max_filters = 512)
     net.cuda()
     
-    training_loader = DataLoader(training_dataset, batch_size=4, shuffle=True, num_workers = 10)
+    training_loader = DataLoader(training_dataset, batch_size=8, shuffle=True, num_workers = 10)
     validation_loader = DataLoader(validate_dataset, batch_size=1, shuffle=True)
 
     # quick test
@@ -129,7 +130,7 @@ def train_net(save_name = None):
  
 def main():
     #fill in the name
-    NET_NAME = 'UNet_large'
+    NET_NAME = 'UNet_deep_universal_2021_11_12'
     save_name = f"/hdd/RecPAIR/{NET_NAME}.pth"
     train_net(save_name)
 
