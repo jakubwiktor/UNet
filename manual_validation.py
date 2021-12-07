@@ -6,8 +6,9 @@ import torch
 import os
 
 from utils.unet import UNet, UNet_deep
+from utils.watershed import watershed
 
-from skimage import io, measure, morphology, feature, color, transform
+from skimage import io, measure, morphology, feature, color, transform, img_as_ubyte
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -18,11 +19,15 @@ def segment():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # net = UNet_shallow(max_filters = 512)
 
-    net = UNet_deep()
-    NET_PATH = '/hdd/RecPAIR/UNet_deep_universal_2021_11_12.pth'
+    # net = UNet_deep()
+    # NET_PATH = '/hdd/RecPAIR/UNet_deep_universal_2021_11_19.pth'
 
     # net = UNet(max_filters = 512)
-    # NET_PATH = '/hdd/RecPAIR/Unet_universal.pth'
+    # NET_PATH = '/hdd/RecPAIR/UNet_normal_universal_2021_12_06.pth'
+
+    net = UNet(max_filters = 512)
+    NET_PATH = '/hdd/RecPAIR/UNet_normal_growthChannels_2021_12_07.pth'
+
 
     saved_net = torch.load(NET_PATH)
     net.load_state_dict(saved_net['model_state_dict'])
@@ -43,7 +48,7 @@ def segment():
         im_org = io.imread(os.path.join(dir_name, f))
         
         sz = im.shape
-        pad_with = np.ceil(np.array(sz)/32)*32 - sz
+        pad_with = np.ceil(np.array(sz)/16)*16 - sz
         pad_with = pad_with.astype('int')
         im = np.pad(im, pad_width=((0,pad_with[0]),(0,pad_with[1])),mode='constant')
 
@@ -56,9 +61,13 @@ def segment():
         res = torch.sigmoid(res)
         res = res.to("cpu").detach().numpy().squeeze(0).squeeze(0)
         
+        res = res[0:sz[0],0:sz[1]]
+
         res = res > 0.5
         
         res = morphology.remove_small_objects(res,50)
+        # res = watershed(res)
+        res = res > 0
         outlines = feature.canny(res)
 
         
@@ -78,15 +87,20 @@ def segment():
 
         plt.imshow(im_org,cmap=plt.cm.gray)
         plt.show()
+        # res = img_as_ubyte(res)
+        # io.imsave(os.path.join(dir_name, f).replace('.','_segmented.'),res,compress=6)
 
 def saveBack():
     
-    NET_PATH = '/hdd/RecPAIR/UNet_universal_net.pth'
+    net = UNet_deep()
+    NET_PATH = '/hdd/RecPAIR/UNet_deep_universal_2021_11_19.pth'
     n = torch.load(NET_PATH)
     model=dict()
-    model['model_type'] = 'UNet'
+    model['model_type'] = 'UNet_deep'
     model['model_state_dict'] = n
-    torch.save(model,'/hdd/RecPAIR/UNet_uni_pipeline_backwardsCompatibility.pth', _use_new_zipfile_serialization=False)
+    model['arhc'] = net
+    # torch.save(model,'/hdd/RecPAIR/UNet_uni_pipeline_backwardsCompatibility.pth', _use_new_zipfile_serialization=False)
+    torch.save(model,'/hdd/RecPAIR/UNet_deep_mdma.pth', _use_new_zipfile_serialization=True)
 
 def segmentTestExp():
 

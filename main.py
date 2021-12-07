@@ -28,28 +28,45 @@ from utils.load_files import getFileList
 def train_net(save_name = None):
 
     #load the data
-    phase_dirs =[
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/GroundTruths/exp4_agarosePad_phase/', ''),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/exp3_agarosePad_phase/',''),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/Kuba/','kuba_raw'),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/Praneeth/','P_raw'),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BV3242/exp8_phase',''),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/empty_MM_channels/','aphase'),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BT2878/','raw')
-                 ]
-    
-    phase = [getFileList(dr,nm) for dr, nm in phase_dirs]
-    phase = [this_phase for each_set in phase for this_phase in each_set]
+    train = 'channels'
 
-    mask_dirs = [
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/GroundTruths/exp4_agarosePad_gt/', ''),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/exp3_agarosePad_gt/',''),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/Kuba/','kuba_gt'),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/Praneeth/','P_gt'),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BV3242/exp8_gt',''),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/empty_MM_channels/','gt'),
-                 ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BT2878/','gt')
-                 ]
+    if train == 'cells':
+        phase_dirs =[
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/GroundTruths/exp4_agarosePad_phase/', ''),
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/exp3_agarosePad_phase/',''),
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/Kuba/','kuba_raw'),
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/Praneeth/','P_raw'),
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BV3242/exp8_phase',''),
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/empty_MM_channels/','aphase'),
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BT2878/','raw')
+                    ]
+        
+        phase = [getFileList(dr,nm) for dr, nm in phase_dirs]
+        phase = [this_phase for each_set in phase for this_phase in each_set]
+
+        mask_dirs = [
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/GroundTruths/exp4_agarosePad_gt/', ''),
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/exp3_agarosePad_gt/',''),
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/Kuba/','kuba_gt'),
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/Praneeth/','P_gt'),
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BV3242/exp8_gt',''),
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BQ2462/empty_MM_channels/','gt'),
+                    ('/hdd/RecPAIR/Microscopy/EXP-20-BQ2489/BT2878/','gt')
+                    ]
+
+    if train == 'channels':
+        phase_dirs =[
+                    ('/hdd/RecPAIR/Microscopy/EXP-19-BQ2462 neural net el665_el1544 P1/BQ2485_channels/1_neuralNetChannels/','aphase'),
+                    ('/hdd/RecPAIR/Microscopy/EXP-19-BQ2462 neural net el665_el1544 P1/BQ2490_chans/phase/','')
+                    ]
+        
+        phase = [getFileList(dr,nm) for dr, nm in phase_dirs]
+        phase = [this_phase for each_set in phase for this_phase in each_set]
+
+        mask_dirs = [
+                    ('/hdd/RecPAIR/Microscopy/EXP-19-BQ2462 neural net el665_el1544 P1/BQ2485_channels/analysis_neuralNet/',''),
+                    ('/hdd/RecPAIR/Microscopy/EXP-19-BQ2462 neural net el665_el1544 P1/BQ2490_chans/mask/','')
+                    ]
 
     mask = [getFileList(dr,nm) for dr, nm in mask_dirs]
     mask = [this_mask for each_set in mask for this_mask in each_set]
@@ -91,12 +108,11 @@ def train_net(save_name = None):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # net = UNet()
-    # net = UNet(max_filters=256)
-    net = UNet_deep(max_filters=1024)
-    # net = UNet_shallow(max_filters = 512)
+    # net = UNet_deep(max_filters=1024)
+    net = UNet(max_filters = 512)
     net.cuda()
     
-    training_loader = DataLoader(training_dataset, batch_size=8, shuffle=True, num_workers = 10)
+    training_loader = DataLoader(training_dataset, batch_size=4, shuffle=True, num_workers = 10)
     validation_loader = DataLoader(validate_dataset, batch_size=1, shuffle=True)
 
     # quick test
@@ -130,7 +146,7 @@ def train_net(save_name = None):
  
 def main():
     #fill in the name
-    NET_NAME = 'UNet_deep_universal_2021_11_12'
+    NET_NAME = 'UNet_normal_growthChannels_2021_12_07'
     save_name = f"/hdd/RecPAIR/{NET_NAME}.pth"
     train_net(save_name)
 
